@@ -47,7 +47,9 @@ def insert_data(cursor, table, **kwargs):
     # Query to insert data into a table
     keys = ", ".join(kwargs.keys())
     placeholders = ", ".join(["%s" for _ in kwargs])
-    query = f"INSERT INTO {table} ({keys}) VALUES ({placeholders})"
+    query = (
+        f"INSERT INTO {table} ({keys}) VALUES ({placeholders}) ON CONFLICT DO UPDATE"
+    )
     try:
         cursor.execute(query, tuple(kwargs.values()))
         cursor.connection.commit()
@@ -63,29 +65,6 @@ def is_present(cursor, table, **kwargs):
 
 
 def bulk_insert_data(cursor, table, data):
-    # Check if data is empty
-    if data is None or data.empty:
-        return True  # No data to insert
-
-    # Get column names
-    keys = ", ".join(data.columns)
-    placeholders = ", ".join(["%s" for _ in data.columns])
-    query = (
-        f"INSERT INTO {table} ({keys}) VALUES ({placeholders}) ON CONFLICT DO NOTHING"
-    )
-
-    try:
-        # Convert DataFrame to a list of tuples
-        values = [tuple(x) for x in data.to_numpy()]
-        execute_values(cursor, query, values)
-        cursor.connection.commit()
-        return True
-    except Exception as e:
-        print(f"Error bulk inserting data: {e}")
-        return False
-
-
-def bulk_insert_data(cursor, table, data):
     if data is None or data.empty:
         return True  # No data to insert
 
@@ -93,7 +72,7 @@ def bulk_insert_data(cursor, table, data):
     columns = list(data.columns)
     # Prepare the query
     query = (
-        f"INSERT INTO {table} ({', '.join(columns)}) VALUES %s ON CONFLICT DO NOTHING"
+        f"INSERT INTO {table} ({', '.join(columns)}) VALUES %s ON CONFLICT DO UPDATE"
     )
 
     try:

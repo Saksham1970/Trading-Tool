@@ -1,26 +1,14 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-
-from dotenv import load_dotenv
-
-import utils.database as database
 from utils.startup import startup
+from app_config import app, celery
 
-load_dotenv()
-
-conn = database.connect_db()
-if not conn:
-    exit(1)
-cursor = conn.cursor()
+# startup(cursor) # Commented out to avoid unnecessary data fetching
+from pages.__init__ import *
 
 
-app = Flask(__name__)
-CORS(app)
-startup(cursor)
-from pages.extension import extension_receive
-
-app.run(port=5000)
+@app.route("/")
+def home():
+    return "Flask is running", 200
 
 
-cursor.close()
-conn.close()
+if __name__ == "__main__":
+    app.run(port=5000)

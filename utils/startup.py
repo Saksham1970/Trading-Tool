@@ -48,17 +48,13 @@ def update_tickers(cursor, tickers):
     days = days_to_fetch()
     dfs = []
 
-    if days != 0:
-        days = days * 7 // get_minimum_weekdays(cursor, tickers)
-        df = yf.download(
-            tickers,
-            start=datetime.today() - timedelta(days=days),
-            end=datetime.today(),
-            interval="1d",
-            threads=True,
-            group_by="ticker",
-        )
-        dfs.append(process_multiple_ticker_df(df, "1d", tickers))
+    if "UpdateRanges" not in SETTINGS:
+        SETTINGS["UpdateRanges"] = {}
+
+    if "1d" not in SETTINGS["UpdateRanges"]:
+        SETTINGS["UpdateRanges"]["1d"] = (
+            REFERECE_DATETIME + timedelta(days=days)
+        ).isoformat()
 
     if "UpdateRanges" in SETTINGS:
         for interval in SETTINGS["UpdateRanges"]:

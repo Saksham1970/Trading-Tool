@@ -1,6 +1,6 @@
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
+from langchain.schema import StrOutputParser
 
 import ast
 
@@ -9,7 +9,7 @@ from utils.api import search_yfinance_tickers
 
 llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro")
 
-template = PromptTemplate(
+prompt = PromptTemplate(
     input_variables=["trading_view_data", "yfinance_results"],
     template="""You are a trading analyst and you will be given two sets of data, one is from TradingView and the other is from Yahoo Finance.
     Your task is to compare the two sets of data. The ticker symbol names are different for both the sets of data, 
@@ -97,7 +97,12 @@ template = PromptTemplate(
     """,
 )
 
-chain = LLMChain(llm=llm, prompt=template, output_key="output")
+chain = (
+    prompt
+    | llm
+    | StrOutputParser()
+    | (lambda x: {"output": x})  # This wraps the output in a dict with key "output"
+)
 
 
 def yfinance_from_tradingview(trading_view_data):

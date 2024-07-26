@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from utils.file_handling import load_json
 
 # API parameters
@@ -23,3 +23,4 @@ SETTINGS = load_json(SETTINGS_FILE)
 # Constants related to data fetching
 HOLIDAY_COMPENSATION_FACTOR = 1.2
 REFERECE_DATETIME = datetime(2000, 1, 1)
+MARKET_CLOSE_UPDATE_TD = timedelta(hours=1)
