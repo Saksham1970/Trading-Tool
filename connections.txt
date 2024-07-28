@@ -5,7 +5,9 @@ database:   HOST = "localhost"
             DB = "stocksdb"
             USER = "postgres"
 
-routes:     /add_alert: symbol, price
+routes:     http://localhost:5000
+
+            /add_alert: symbol, price
             /delete_alert: alert_id
             /get_alerts:
             /extension_receive: action, symbol, price
