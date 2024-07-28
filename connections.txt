@@ -1,0 +1,19 @@
+websocket:  ws://localhost:8765
+
+database:   HOST = "localhost"
+            PORT = "5432"
+            DB = "stocksdb"
+            USER = "postgres"
+
+routes:     /add_alert: symbol, price
+            /delete_alert: alert_id
+            /get_alerts:
+            /extension_receive: action, symbol, price
+            /add_rvol: rvol
+            /delete_rvol: rvol
+            /get_watchlists: 
+            /add_watchlist: watchlist_name, symbols (Optional)
+            /delete_watchlist: watchlist_name
+            /add_watchlist_item: watchlist_name, symbol
+            /delete_watchlist_item: watchlist_name, symbol
+            /:

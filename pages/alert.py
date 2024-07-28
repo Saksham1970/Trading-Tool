@@ -28,10 +28,18 @@ def add_alert(symbol, price):
     return True
 
 
+@app.route("/add_alert", methods=["POST"])
+def add_alert_route():
+    req = request.json
+    if add_alert(req["symbol"], req["price"]):
+        return jsonify({"status": "success"})
+    return jsonify({"status": "error"})
+
+
 @app.route("/delete_alert", methods=["POST"])
 def delete_alert():
     req = request.json
-    if database.delete_data("AlertsWatchlist", Symbol=req["alertId"]):
+    if database.delete_data("AlertsWatchlist", Symbol=req["alert_id"]):
         return jsonify({"status": "success"})
     return jsonify({"status": "error"})
 
