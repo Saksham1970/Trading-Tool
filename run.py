@@ -7,7 +7,6 @@ import atexit
 import requests
 from requests.exceptions import RequestException
 
-
 processes = []
 
 
@@ -25,32 +24,13 @@ def run_docker_compose():
 def run_flask():
     process = subprocess.Popen([sys.executable, "server.py"])
     processes.append(process)
+    return process
 
 
-def run_celery():
-    process = subprocess.Popen(
-        [
-            "celery",
-            "-A",
-            "app_config.celery",
-            "worker",
-            "--loglevel=info",
-        ]
-    )
+def run_scheduler():
+    process = subprocess.Popen([sys.executable, "background/scheduler.py"])
     processes.append(process)
-
-
-def run_celery_beat():
-    process = subprocess.Popen(
-        [
-            "celery",
-            "-A",
-            "app_config.celery",
-            "beat",
-            "--loglevel=info",
-        ]
-    )
-    processes.append(process)
+    return process
 
 
 def wait_for_timescale():
@@ -109,11 +89,9 @@ def cleanup():
 
 
 if __name__ == "__main__":
-    # Register the cleanup function to be called on exit
     atexit.register(cleanup)
 
     try:
-
         if not is_docker_running():
             print("Exiting as Docker is not running.")
             sys.exit(1)
@@ -124,21 +102,15 @@ if __name__ == "__main__":
             print("Exiting due to TimescaleDB startup failure.")
             sys.exit(1)
 
-        run_flask()
+        flask_process = run_flask()
         if not wait_for_flask():
             print("Error: Flask didn't start properly.")
             sys.exit(1)
-        run_celery()
-        run_celery_beat()
-
+        run_scheduler()
         print("All processes started. Press CTRL+C to exit.")
 
         while True:
             time.sleep(1)
-
     except Exception as e:
         print(f"An error occurred: {e}")
-        sys.exit(1)
-
-    finally:
         print("Exiting...")

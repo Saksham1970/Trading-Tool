@@ -1,7 +1,7 @@
+from app_config import app
 from utils.startup import startup
-from app_config import app, celery
 
-# startup(cursor) # Commented out to avoid unnecessary data fetching
+startup()  # Comment out to avoid unnecessary data fetching
 from pages.__init__ import *
 
 

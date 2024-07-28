@@ -97,7 +97,7 @@ prompt = PromptTemplate(
     """,
 )
 
-chain = (
+llm_chain = (
     prompt
     | llm
     | StrOutputParser()
@@ -106,8 +106,13 @@ chain = (
 
 
 def yfinance_from_tradingview(trading_view_data):
-    yfinance_results = search_yfinance_tickers(trading_view_data["details-description"])
-    out = chain.invoke(
+    yfinance_results = search_yfinance_tickers(
+        trading_view_data["symbol"]
+    ) + search_yfinance_tickers(trading_view_data["details-description"])
+
+    if not yfinance_results:
+        return {}
+    out = llm_chain.invoke(
         {
             "trading_view_data": trading_view_data,
             "yfinance_results": yfinance_results,

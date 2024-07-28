@@ -1,11 +1,11 @@
-from utils.data import get_current_tickers, days_to_fetch, get_minimum_weekdays
+from utils.data import get_current_tickers, days_to_fetch
 from utils import database
-from utils.config import SETTINGS, REFERECE_DATETIME
+from utils.config import SETTINGS, REFERECE_DATETIME, SETTINGS_FILE
+from utils.file_handling import save_json
 
 import yfinance as yf
 from datetime import datetime, timedelta, date
 import pandas as pd
-from psycopg2.extras import execute_values
 
 
 def process_multiple_ticker_df(df, interval, symbols):
@@ -44,17 +44,19 @@ def process_multiple_ticker_df(df, interval, symbols):
     return df
 
 
-def update_tickers(cursor, tickers):
+def update_tickers(tickers):
     days = days_to_fetch()
     dfs = []
 
     if "UpdateRanges" not in SETTINGS:
         SETTINGS["UpdateRanges"] = {}
+        save_json(SETTINGS_FILE, SETTINGS)
 
     if "1d" not in SETTINGS["UpdateRanges"]:
         SETTINGS["UpdateRanges"]["1d"] = (
             REFERECE_DATETIME + timedelta(days=days)
         ).isoformat()
+        save_json(SETTINGS_FILE, SETTINGS)
 
     if "UpdateRanges" in SETTINGS:
         for interval in SETTINGS["UpdateRanges"]:
@@ -74,11 +76,11 @@ def update_tickers(cursor, tickers):
 
     df = pd.concat(dfs)
 
-    database.bulk_insert_data(cursor, "Stocks", df)
+    database.bulk_insert_data("Stocks", df)
 
 
-def startup(cursor):
-    tickers = get_current_tickers(cursor)
+def startup():
+    tickers = get_current_tickers()
     if not tickers:
         return
-    update_tickers(cursor, tickers)
+    update_tickers(tickers)

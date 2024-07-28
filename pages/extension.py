@@ -1,4 +1,4 @@
-from app_config import app, cursor
+from app_config import app
 from flask import request, jsonify
 
 import utils.database as database
@@ -17,7 +17,6 @@ def extension_receive():
         data["symbol"] = req["symbol"]
 
         if not database.is_present(
-            cursor,
             "SymbolMapping",
             TVSymbol=req["symbol"],
             Description=data["details-description"],
@@ -27,10 +26,33 @@ def extension_receive():
         ):
             try:
                 yfdata = yfinance_from_tradingview(data)
+                if not yfdata:
+                    raise Exception("Symbol not found on Yahoo Finance")
+
+                keys = [
+                    "exchange",
+                    "shortname",
+                    "quoteType",
+                    "symbol",
+                    "index",
+                    "score",
+                    "typeDisp",
+                    "longname",
+                    "exchDisp",
+                    "sector",
+                    "sectorDisp",
+                    "industry",
+                    "industryDisp",
+                    "isYahooFinance",
+                ]
+                for key in keys:
+                    if key not in yfdata:
+                        yfdata[key] = None
+
                 yfdata["indexName"] = yfdata["index"]
                 del yfdata["index"]
+
                 database.insert_data(
-                    cursor,
                     "SymbolMapping",
                     TVSymbol=req["symbol"],
                     YFSymbol=yfdata["symbol"],
@@ -39,7 +61,7 @@ def extension_receive():
                     AdditionalMain=data["details-additional-main"],
                     AdditionalSecondary=data["details-additional-secondary"],
                 )
-                database.insert_data(cursor, "YFSymbol", **yfdata)
+                database.insert_data("YFSymbol", **yfdata)
 
             except Exception as e:
                 print(f"Error adding to watchlist: {e}")
@@ -50,7 +72,6 @@ def extension_receive():
 
         else:
             symbol = database.get_data(
-                cursor,
                 "SymbolMapping",
                 __dictionary=True,
                 TVSymbol=req["symbol"],
@@ -61,9 +82,9 @@ def extension_receive():
             )[0]["yfsymbol"]
 
         price = req["price"]
-        tickers = get_current_tickers(cursor)
+        tickers = get_current_tickers()
         if symbol not in tickers:
-            update_tickers(cursor, [symbol])
+            update_tickers([symbol])
 
         if add_alert(symbol, price):
             print(f"Alert added for {symbol} at {price}")

@@ -3,7 +3,6 @@ import json
 from ratelimit import limits
 from datetime import timedelta, datetime
 import yfinance as yf
-
 from utils import database
 from utils.config import API_CALLS, API_RATE_LIMIT
 
@@ -31,7 +30,7 @@ def search_yfinance_tickers(query):
         return []
 
 
-def fetch_exchange_info(cursor, exchange, symbol):
+def fetch_exchange_info(exchange, symbol):
     mo3data = yf.download(symbol, period="3mo", interval="1d")
     date = mo3data.iloc[-2].name
     d1data = yf.download(
@@ -68,7 +67,6 @@ def fetch_exchange_info(cursor, exchange, symbol):
         granularity["_" + gran] = len(data)
 
     database.insert_data(
-        cursor,
         "ExchangeInfo",
         Exchange=exchange,
         MarketOpen=market_open,

@@ -3,10 +3,12 @@ from utils.config import HOLIDAY_COMPENSATION_FACTOR, SETTINGS
 from utils.api import fetch_exchange_info
 
 
-def get_current_tickers(cursor):
+def get_current_tickers():
     # Query to get unique symbols from AlertsWatchlist and Watchlists
-    cursor.execute(
-        """
+    return [
+        ticker[0]
+        for ticker in database.get_data_query(
+            """
         SELECT DISTINCT Symbol
         FROM (
             SELECT Symbol FROM AlertsWatchlist
@@ -14,8 +16,8 @@ def get_current_tickers(cursor):
             SELECT unnest(Symbols) AS Symbol FROM Watchlists
         ) AS combined_symbols;
         """
-    )
-    return [ticker[0] for ticker in cursor.fetchall()]
+        )
+    ]
 
 
 def days_to_fetch():
@@ -25,22 +27,22 @@ def days_to_fetch():
     return int(days * HOLIDAY_COMPENSATION_FACTOR)
 
 
-def get_minimum_weekdays(cursor, tickers):
+def get_minimum_weekdays(tickers):
     tickers_tuple = tuple(tickers)  # Convert list to tuple
     query = "SELECT DISTINCT Exchange, Symbol FROM YFSymbol WHERE Symbol IN %s"
 
-    cursor.execute(query, (tickers_tuple,))
+    database.cursor.execute(query, (tickers_tuple,))
 
-    exchanges = cursor.fetchall()
+    exchanges = database.cursor.fetchall()
     for exchange, symbol in exchanges:
-        if not database.is_present(cursor, "ExchangeInfo", Exchange=exchange):
-            fetch_exchange_info(cursor, exchange, symbol)
+        if not database.is_present("ExchangeInfo", Exchange=exchange):
+            fetch_exchange_info(exchange, symbol)
 
     exchanges = [exchange[0] for exchange in exchanges]
     exchanges_tuple = tuple(exchanges)  # Convert list to tuple
     query = "SELECT WeekMask FROM ExchangeInfo WHERE Exchange IN %s"
-    cursor.execute(query, (exchanges_tuple,))
+    database.cursor.execute(query, (exchanges_tuple,))
 
-    weekmasks = cursor.fetchall()
+    weekmasks = database.cursor.fetchall()
     weekmasks = [len(weekmask[0].split()) for weekmask in weekmasks]
     return min(weekmasks)

@@ -41,6 +41,7 @@ CREATE TABLE YFSymbol (
 );
 
 CREATE TABLE AlertsWatchlist (
+    AlertId SERIAL PRIMARY KEY,
     Symbol TEXT,
     AlertValue DOUBLE PRECISION,
     AlertOperator BOOLEAN,
