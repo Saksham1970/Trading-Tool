@@ -1,0 +1,4 @@
+conda create -n trading-tool python pip
+conda activate trading-tool
+sudo apt-get install -y libpq-dev
+pip install -r requirements.txt

@@ -11,7 +11,10 @@ processes = []
 
 
 def is_docker_running():
-    return "Docker Desktop.exe" in (p.name() for p in psutil.process_iter())
+    for p in psutil.process_iter():
+        if ("Docker Desktop.exe" in p.name()) or ('dockerd' in p.name()):
+            return True
+    return False
 
 
 def run_docker_compose():

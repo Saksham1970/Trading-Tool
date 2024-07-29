@@ -1,0 +1,16 @@
+docker
+psutil
+websockets
+psycopg2-binary
+psycopg2
+python-dotenv
+Flask
+Flask-Cors
+ratelimit
+yfinance
+pandas
+langchain
+langchain-google-genai
+yflive
+protobuf=3.20.0
+apscheduler
