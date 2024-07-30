@@ -96,7 +96,7 @@ async def send_quotes(websocket):
 
 
 def on_quote(qs, quote):
-
+    
     print("Quote Recieved")
     processed_quote = {
         "symbol": quote.identifier,
