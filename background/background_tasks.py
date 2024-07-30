@@ -26,18 +26,37 @@ symbol_averages = defaultdict(lambda: defaultdict(float))
 streamer = QuoteStreamer()
 
 
+def update_all_averages():
+    if "RVols" not in SETTINGS or not SETTINGS["RVols"]:
+        return
+
+    days = SETTINGS["RVols"]
+    for day in days:
+        database.cursor.execute(
+            """SELECT Symbol, AVG(Volume) FROM Stocks 
+            WHERE Time > CURRENT_DATE - INTERVAL '%s days'
+            GROUP BY Symbol""",
+            (day,),
+        )
+        results = database.cursor.fetchall()
+        for symbol, avg_volume in results:
+            symbol_averages[symbol][day] = avg_volume
+
+
 def update_averages(exchange):
     if "RVols" not in SETTINGS or not SETTINGS["RVols"]:
         return
 
     days = SETTINGS["RVols"]
     for day in days:
-        results = database.cursor.execute(
+        database.cursor.execute(
             """SELECT Symbol, AVG(Volume) FROM Stocks 
             WHERE Exchange = %s AND
-            Date > CURRENT_DATE - INTERVAL %s DAY""",
+            Time > CURRENT_DATE - INTERVAL '%s days'""",
             (exchange, day),
-        ).fetchall()
+        )
+
+        results = database.cursor.fetchall()
 
         for symbol, avg_volume in results:
             symbol_averages[symbol][day] = avg_volume
@@ -96,7 +115,7 @@ async def send_quotes(websocket):
 
 
 def on_quote(qs, quote):
-    
+
     print("Quote Recieved")
     processed_quote = {
         "symbol": quote.identifier,
@@ -124,7 +143,7 @@ def on_quote(qs, quote):
 
     for days in SETTINGS["RVols"]:
         if symbol_averages[quote.identifier][days] > 0:
-            processed_quote[f"rvol_{days}"] = (
+            processed_quote[f"rvol_{days}"] = float(
                 quote.dayVolume / symbol_averages[quote.identifier][days]
             )
 
@@ -138,6 +157,7 @@ async def ws():
 
 
 def start_quote_streaming():
+    update_all_averages()
     streamer.on_quote = on_quote
     symbols = get_current_tickers()
     streamer.subscribe(symbols)
