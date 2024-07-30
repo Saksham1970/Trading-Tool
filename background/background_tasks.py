@@ -97,17 +97,19 @@ async def send_quotes(websocket):
 
 def on_quote(qs, quote):
 
+    print("Quote Recieved")
     processed_quote = {
         "symbol": quote.identifier,
         "price": quote.price,
     }
 
-    alerts = database.get_data_query(
+    database.cursor.execute(
         """SELECT AlertId, AlertValue, AlertOperator FROM AlertsWatchlist
                                      WHERE Symbol = %s and AlertActive = True""",
         (quote.identifier,),
     )
 
+    alerts = database.cursor.fetchall()
     alerts_hit = []
     for alert_id, alert_value, alert_operator in alerts:
         if (alert_operator and quote.price > alert_value) or (
@@ -121,9 +123,10 @@ def on_quote(qs, quote):
     processed_quote["alerts"] = alerts_hit
 
     for days in SETTINGS["RVols"]:
-        processed_quote[f"rvol_{days}"] = (
-            quote.dayVolume / symbol_averages[quote.identifier][days]
-        )
+        if symbol_averages[quote.identifier][days] > 0:
+            processed_quote[f"rvol_{days}"] = (
+                quote.dayVolume / symbol_averages[quote.identifier][days]
+            )
 
     quote_queue.put_nowait(processed_quote)
 
