@@ -102,6 +102,24 @@ def on_quote(qs, quote):
         "price": quote.price,
     }
 
+    alerts = database.get_data_query(
+        """SELECT AlertId, AlertValue, AlertOperator FROM AlertsWatchlist
+                                     WHERE Symbol = %s and AlertActive = True""",
+        (quote.identifier,),
+    )
+
+    alerts_hit = []
+    for alert_id, alert_value, alert_operator in alerts:
+        if (alert_operator and quote.price > alert_value) or (
+            not alert_operator and quote.price < alert_value
+        ):
+            database.update_data(
+                "AlertsWatchlist", "AlertActive=False", AlertId=alert_id
+            )
+            alerts_hit.append(alert_id)
+
+    processed_quote["alerts"] = alerts_hit
+
     for days in SETTINGS["RVols"]:
         processed_quote[f"rvol_{days}"] = (
             quote.dayVolume / symbol_averages[quote.identifier][days]

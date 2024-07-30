@@ -99,3 +99,16 @@ def delete_data(table, **kwargs):
     except Exception as e:
         print(f"Error deleting data: {e}")
         return False
+
+
+def update_data(table, set_clause, **kwargs):
+    # Query to update data in a table
+    where_clause = " AND ".join([f"{key} = %s" for key in kwargs.keys()])
+    query = f"UPDATE {table} SET {set_clause} WHERE {where_clause}"
+    try:
+        cursor.execute(query, tuple(kwargs.values()))
+        cursor.connection.commit()
+        return True
+    except Exception as e:
+        print(f"Error updating data: {e}")
+        return False
