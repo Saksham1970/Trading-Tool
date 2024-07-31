@@ -106,9 +106,10 @@ llm_chain = (
 
 
 def yfinance_from_tradingview(trading_view_data):
-    yfinance_results = search_yfinance_tickers(
-        trading_view_data["symbol"]
-    ) + search_yfinance_tickers(trading_view_data["details-description"])
+    yfinance_results = (
+        search_yfinance_tickers(trading_view_data["symbol"])[:3]
+        + search_yfinance_tickers(trading_view_data["details-description"])[:3]
+    )
 
     if not yfinance_results:
         return {}

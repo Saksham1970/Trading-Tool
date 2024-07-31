@@ -69,6 +69,11 @@ CREATE TABLE ExchangeInfo (
     _90m INT
 );
 
+CREATE TABLE StreamedSymbols (
+    Symbol TEXT PRIMARY KEY,
+    AddedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 
 -- Create the hypertable
 SELECT create_hypertable('stocks', 'time', 
