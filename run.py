@@ -11,10 +11,13 @@ processes = []
 
 
 def is_docker_running():
-    for p in psutil.process_iter():
-        if ("Docker Desktop.exe" in p.name()) or ("dockerd" in p.name()):
-            return True
-    return False
+    try:
+        client = docker.from_env()
+        client.ping()
+        return True
+    except Exception as e:
+        print(f"Docker not running or accessible: {e}")
+        return False
 
 
 def run_docker_compose():

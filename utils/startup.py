@@ -52,7 +52,7 @@ def update_tickers(tickers):
         SETTINGS["UpdateRanges"] = {}
         save_json(SETTINGS_FILE, SETTINGS)
 
-    if "1d" not in SETTINGS["UpdateRanges"]:
+    if "1d" not in SETTINGS["UpdateRanges"] and days > 0:
         SETTINGS["UpdateRanges"]["1d"] = (
             REFERECE_DATETIME + timedelta(days=days)
         ).isoformat()

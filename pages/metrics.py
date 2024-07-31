@@ -23,3 +23,8 @@ def delete_rvol():
 
     save_json(SETTINGS_FILE, SETTINGS)
     return jsonify({"status": "success"})
+
+
+@app.route("/get_rvols", methods=["GET"])
+def get_rvols():
+    return jsonify(SETTINGS["RVols"])

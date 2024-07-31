@@ -22,7 +22,7 @@ def get_current_tickers():
 
 def days_to_fetch():
     days = 0
-    if "RVols" in SETTINGS:
+    if "RVols" in SETTINGS and SETTINGS["RVols"]:
         days = max(SETTINGS["RVols"])
     return int(days * HOLIDAY_COMPENSATION_FACTOR)
 

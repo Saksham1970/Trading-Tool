@@ -173,11 +173,12 @@ def on_quote(qs, quote):
 
     processed_quote["alerts"] = alerts_hit
 
-    for days in SETTINGS["RVols"]:
-        if quote.dayVolume and symbol_averages[quote.identifier][days] > 0:
-            processed_quote[f"rvol_{days}"] = float(
-                quote.dayVolume / symbol_averages[quote.identifier][days]
-            )
+    if "RVols" in SETTINGS and SETTINGS["RVols"]:
+        for days in SETTINGS["RVols"]:
+            if quote.dayVolume and symbol_averages[quote.identifier][days] > 0:
+                processed_quote[f"rvol_{days}"] = float(
+                    quote.dayVolume / symbol_averages[quote.identifier][days]
+                )
 
     ws_queue.put_nowait(processed_quote)
 
