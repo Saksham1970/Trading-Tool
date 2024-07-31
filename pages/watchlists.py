@@ -63,9 +63,10 @@ def delete_watchlist():
 @app.route("/add_watchlist_item", methods=["POST"])
 def add_watchlist_item():
     data = request.json
+    
     watchlist_name = data.get("watchlist_name")
     symbol = data.get("symbol")
-
+    
     if not watchlist_name or not symbol:
         return (
             jsonify(

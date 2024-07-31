@@ -11,6 +11,7 @@ from utils.startup import update_tickers
 @app.route("/extension_receive", methods=["POST"])
 def extension_receive():
     req = request.json
+    
     if req["action"] == "addToWatchlist":
         print(f"Adding {req['symbol']} to Alert Watchlist")
         data = req["additionalData"]
