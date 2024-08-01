@@ -2,7 +2,6 @@ import yfinance as yf
 from utils import database
 from app_config import app
 from flask import request, jsonify
-from background.background_tasks import streamer
 
 
 def add_alert(symbol, price):
@@ -23,7 +22,7 @@ def add_alert(symbol, price):
         AlertActive=True,
     )
 
-    streamer.subscribe([symbol])
+    database.insert_data("StreamedSymbols", Symbol=symbol)
 
     return True
 

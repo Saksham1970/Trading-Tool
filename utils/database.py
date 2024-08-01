@@ -29,7 +29,9 @@ def get_data(table, __dictionary=False, **kwargs):
         return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
     cursor.execute(query, tuple(kwargs.values()))
-    return cursor.fetchall()
+    if cursor.description:
+        return cursor.fetchall()
+    return None
 
 
 def get_data_query(query, __dictionary=False):
@@ -39,7 +41,9 @@ def get_data_query(query, __dictionary=False):
         return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
     cursor.execute(query)
-    return cursor.fetchall()
+    if cursor.description:
+        return cursor.fetchall()
+    return None
 
 
 def insert_data(table, **kwargs):
@@ -91,7 +95,9 @@ def bulk_insert_data(table, data):
 def delete_data(table, **kwargs):
     # Query to delete data from a table
     where_clause = " AND ".join([f"{key} = %s" for key in kwargs.keys()])
-    query = f"DELETE FROM {table} WHERE {where_clause}"
+    query = f"DELETE FROM {table}"
+    if kwargs:
+        query += f" WHERE {where_clause}"
     try:
         cursor.execute(query, tuple(kwargs.values()))
         cursor.connection.commit()

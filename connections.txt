@@ -13,6 +13,7 @@ routes:     http://localhost:5000
             /extension_receive: action, symbol, price
             /add_rvol: rvol
             /delete_rvol: rvol
+            /get_rvols
             /get_watchlists: 
             /add_watchlist: watchlist_name, symbols (Optional)
             /delete_watchlist: watchlist_name
