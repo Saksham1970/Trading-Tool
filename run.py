@@ -34,7 +34,7 @@ def run_flask():
 
 
 def run_scheduler():
-    process = subprocess.Popen([sys.executable, "background/scheduler.py"])
+    process = subprocess.Popen([sys.executable, "scheduler.py"])
     processes.append(process)
     return process
 

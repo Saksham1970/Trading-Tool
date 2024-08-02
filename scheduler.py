@@ -1,5 +1,7 @@
+from dotenv import load_dotenv
+
+load_dotenv()
 import sys
-import os
 import asyncio
 import websockets
 import json
@@ -12,13 +14,12 @@ from collections import defaultdict
 from yflive import QuoteStreamer
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from utils import database
 from utils.startup import process_multiple_ticker_df
 from utils.config import MARKET_CLOSE_UPDATE_TD, SETTINGS
 from utils.data import get_current_tickers
 import queue
+
 
 ws_queue = queue.Queue()
 symbol_averages = defaultdict(lambda: defaultdict(float))
