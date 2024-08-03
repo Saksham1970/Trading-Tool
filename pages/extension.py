@@ -6,12 +6,63 @@ from utils.llm_comparison import yfinance_from_tradingview
 from pages.alert import add_alert
 from utils.data import get_current_tickers
 from utils.startup import update_tickers
+from utils.api import search_yfinance_tickers
+
+
+@app.rount("/yfinance_direct_alert", methods=["POST"])
+def yfinance_direct_alert():
+    req = request.json
+    symbol = req["symbol"]
+    results = search_yfinance_tickers(symbol)
+    for result in results:
+        if result["symbol"] == symbol:
+            break
+    else:
+        return jsonify({"status": "error", "message": "Symbol not found"})
+
+    keys = [
+        "exchange",
+        "shortname",
+        "quoteType",
+        "symbol",
+        "index",
+        "score",
+        "typeDisp",
+        "longname",
+        "exchDisp",
+        "sector",
+        "sectorDisp",
+        "industry",
+        "industryDisp",
+        "isYahooFinance",
+    ]
+    for key in keys:
+        if key not in result:
+            result[key] = None
+
+    result["indexName"] = result["index"]
+    del result["index"]
+
+    try:
+        database.insert_data("YFSymbol", **result)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+    price = req["price"]
+    tickers = get_current_tickers()
+    if symbol not in tickers:
+        update_tickers([symbol])
+
+    if add_alert(symbol, price):
+        print(f"Alert added for {symbol} at {price}")
+
+    return jsonify({"status": "success", "message": "Data received"})
 
 
 @app.route("/extension_receive", methods=["POST"])
 def extension_receive():
     req = request.json
-    
+
     if req["action"] == "addToWatchlist":
         print(f"Adding {req['symbol']} to Alert Watchlist")
         data = req["additionalData"]
