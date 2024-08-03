@@ -9,44 +9,50 @@ from utils.startup import update_tickers
 from utils.api import search_yfinance_tickers
 
 
-@app.rount("/yfinance_direct_alert", methods=["POST"])
+def add_yf_data(yf_data):
+    symbol = yf_data["symbol"]
+    if not database.is_present("YFSymbol", symbol=symbol):
+        keys = [
+            "exchange",
+            "shortname",
+            "quoteType",
+            "symbol",
+            "index",
+            "score",
+            "typeDisp",
+            "longname",
+            "exchDisp",
+            "sector",
+            "sectorDisp",
+            "industry",
+            "industryDisp",
+            "isYahooFinance",
+        ]
+        for key in keys:
+            if key not in yf_data:
+                yf_data[key] = None
+
+        yf_data["indexName"] = yf_data["index"]
+        del yf_data["index"]
+        database.insert_data("YFSymbol", **yf_data)
+
+
+@app.route("/yfinance_direct_alert", methods=["POST"])
 def yfinance_direct_alert():
     req = request.json
     symbol = req["symbol"]
-    results = search_yfinance_tickers(symbol)
-    for result in results:
-        if result["symbol"] == symbol:
-            break
-    else:
-        return jsonify({"status": "error", "message": "Symbol not found"})
+    if not database.is_present("YFSymbol", symbol=symbol):
+        results = search_yfinance_tickers(symbol)
+        for result in results:
+            if result["symbol"] == symbol:
+                break
+        else:
+            return jsonify({"status": "error", "message": "Symbol not found"})
+        try:
+            add_yf_data(result)
 
-    keys = [
-        "exchange",
-        "shortname",
-        "quoteType",
-        "symbol",
-        "index",
-        "score",
-        "typeDisp",
-        "longname",
-        "exchDisp",
-        "sector",
-        "sectorDisp",
-        "industry",
-        "industryDisp",
-        "isYahooFinance",
-    ]
-    for key in keys:
-        if key not in result:
-            result[key] = None
-
-    result["indexName"] = result["index"]
-    del result["index"]
-
-    try:
-        database.insert_data("YFSymbol", **result)
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)})
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)})
 
     price = req["price"]
     tickers = get_current_tickers()
@@ -81,29 +87,6 @@ def extension_receive():
                 if not yfdata:
                     raise Exception("Symbol not found on Yahoo Finance")
 
-                keys = [
-                    "exchange",
-                    "shortname",
-                    "quoteType",
-                    "symbol",
-                    "index",
-                    "score",
-                    "typeDisp",
-                    "longname",
-                    "exchDisp",
-                    "sector",
-                    "sectorDisp",
-                    "industry",
-                    "industryDisp",
-                    "isYahooFinance",
-                ]
-                for key in keys:
-                    if key not in yfdata:
-                        yfdata[key] = None
-
-                yfdata["indexName"] = yfdata["index"]
-                del yfdata["index"]
-
                 database.insert_data(
                     "SymbolMapping",
                     TVSymbol=req["symbol"],
@@ -113,8 +96,8 @@ def extension_receive():
                     AdditionalMain=data["details-additional-main"],
                     AdditionalSecondary=data["details-additional-secondary"],
                 )
-                database.insert_data("YFSymbol", **yfdata)
 
+                add_yf_data(yfdata)
             except Exception as e:
                 print(f"Error adding to watchlist: {e}")
                 return jsonify(

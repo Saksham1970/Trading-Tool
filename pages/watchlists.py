@@ -1,6 +1,8 @@
 from app_config import app
 from flask import request, jsonify
 from utils import database
+from utils.data import get_current_tickers
+from utils.startup import update_tickers
 
 
 @app.route("/get_watchlists", methods=["GET"])
@@ -63,10 +65,10 @@ def delete_watchlist():
 @app.route("/add_watchlist_item", methods=["POST"])
 def add_watchlist_item():
     data = request.json
-    
+
     watchlist_name = data.get("watchlist_name")
     symbol = data.get("symbol")
-    
+
     if not watchlist_name or not symbol:
         return (
             jsonify(
@@ -85,31 +87,16 @@ def add_watchlist_item():
         current_symbols = watchlist[0]["symbols"]
         if symbol not in current_symbols:
             current_symbols.append(symbol)
-            success = database.insert_data(
-                "Watchlists", WatchlistName=watchlist_name, Symbols=current_symbols
+            database.cursor.execute(
+                "UPDATE Watchlists SET Symbols = %s WHERE WatchlistName = %s",
+                (current_symbols, watchlist_name),
             )
-            if success:
-                return (
-                    jsonify(
-                        {
-                            "success": True,
-                            "message": "Symbol added to watchlist successfully",
-                        }
-                    ),
-                    200,
-                )
-            else:
-                return (
-                    jsonify(
-                        {"success": False, "error": "Failed to add symbol to watchlist"}
-                    ),
-                    500,
-                )
-        else:
-            return (
-                jsonify({"success": True, "message": "Symbol already in watchlist"}),
-                200,
-            )
+            database.conn.commit()
+            current_symbols = get_current_tickers()
+            if symbol not in current_symbols:
+                update_tickers([symbol])
+        return jsonify({"success": True})
+
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -138,29 +125,22 @@ def delete_watchlist_item():
         current_symbols = watchlist[0]["symbols"]
         if symbol in current_symbols:
             current_symbols.remove(symbol)
-            success = database.insert_data(
-                "Watchlists", WatchlistName=watchlist_name, Symbols=current_symbols
+            database.cursor.execute(
+                "UPDATE Watchlists SET Symbols = %s WHERE WatchlistName = %s",
+                (current_symbols, watchlist_name),
             )
-            if success:
-                return (
-                    jsonify(
-                        {
-                            "success": True,
-                            "message": "Symbol removed from watchlist successfully",
-                        }
-                    ),
-                    200,
-                )
-            else:
-                return (
-                    jsonify(
-                        {
-                            "success": False,
-                            "error": "Failed to remove symbol from watchlist",
-                        }
-                    ),
-                    500,
-                )
+            database.conn.commit()
+
+            return (
+                jsonify(
+                    {
+                        "success": True,
+                        "message": "Symbol removed from watchlist successfully",
+                    }
+                ),
+                200,
+            )
+
         else:
             return jsonify({"success": True, "message": "Symbol not in watchlist"}), 200
     except Exception as e:
