@@ -1,5 +1,3 @@
-CREATE EXTENSION IF NOT EXISTS timescaledb;
-
 -- Create your table
 CREATE TABLE Stocks (
     Time TIMESTAMPTZ NOT NULL,
@@ -75,14 +73,5 @@ CREATE TABLE StreamedSymbols (
 );
 
 
--- Create the hypertable
-SELECT create_hypertable('stocks', 'time', 
-    partitioning_column => 'symbol', 
-    number_partitions => 10,
-    chunk_time_interval => INTERVAL '1 day',
-    create_default_indexes => FALSE);
-
--- Create indexes
+CREATE INDEX ON stocks (time);
 CREATE INDEX ON stocks (symbol, interval, time DESC);
-
-
