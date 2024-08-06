@@ -1,14 +1,12 @@
 import psycopg2
 
-from utils.config import HOST, PORT, DB, USER, PASSWORD
+from utils.config import DATABASE_URL
 from psycopg2.extras import execute_values
 
 
 try:
     # Establish the connection
-    conn = psycopg2.connect(
-        host=HOST, port=PORT, database=DB, user=USER, password=PASSWORD
-    )
+    conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
 
 except psycopg2.Error as e:
