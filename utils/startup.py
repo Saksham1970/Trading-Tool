@@ -73,10 +73,9 @@ def update_tickers(tickers):
                 group_by="ticker",
             )
             dfs.append(process_multiple_ticker_df(df, interval, tickers))
-
-    df = pd.concat(dfs)
-
-    database.bulk_insert_data("Stocks", df)
+    if dfs:
+        df = pd.concat(dfs)
+        database.bulk_insert_data("Stocks", df)
 
 
 def startup():

@@ -8,7 +8,7 @@ API_RATE_LIMIT = 60
 
 
 # Connection parameters
-HOST = "localhost"
+HOST = "timescaledb"
 PORT = "5432"
 DB = "stocksdb"
 USER = "postgres"
