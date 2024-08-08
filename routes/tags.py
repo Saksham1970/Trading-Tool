@@ -13,7 +13,6 @@ def create_tag():
         database.insert_data("Tags", TagName=tag_name, TagColor=tag_color)
         return jsonify({"status": "success"})
     except Exception as e:
-        print(e)
         return jsonify({"status": "error", "message": str(e)})
 
 
@@ -47,6 +46,8 @@ def add_alert_tag():
             "AlertsWatchlist", AlertID=alert_id, __dictionary=True
         )
         tags = alert[0]["tags"]
+        if not tags:
+            tags = []
         if tag_id not in tags:
             tags.append(tag_id)
             database.cursor.execute(
