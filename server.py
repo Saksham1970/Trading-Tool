@@ -2,7 +2,7 @@ from app_config import app
 from utils.startup import startup
 
 startup()  # Comment out to avoid unnecessary data fetching
-from pages.__init__ import *
+from routes.__init__ import *
 
 
 @app.route("/")
