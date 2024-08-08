@@ -39,34 +39,31 @@ def add_yf_data(yf_data):
 
 @app.route("/yfinance_direct_alert", methods=["POST"])
 def yfinance_direct_alert():
-    print("We are here")
-    try:
-        req = request.json
-        symbol = req["symbol"]
-        if not database.is_present("YFSymbol", symbol=symbol):
-            results = search_yfinance_tickers(symbol)
-            for result in results:
-                if result["symbol"] == symbol:
-                    break
-            else:
-                return jsonify({"status": "error", "message": "Symbol not found"})
-            try:
-                add_yf_data(result)
 
-            except Exception as e:
-                return jsonify({"status": "error", "message": str(e)})
+    req = request.json
+    symbol = req["symbol"]
+    if not database.is_present("YFSymbol", symbol=symbol):
+        results = search_yfinance_tickers(symbol)
+        for result in results:
+            if result["symbol"] == symbol:
+                break
+        else:
+            return jsonify({"status": "error", "message": "Symbol not found"})
+        try:
+            add_yf_data(result)
 
-        price = req["price"]
-        tickers = get_current_tickers()
-        if symbol not in tickers:
-            update_tickers([symbol])
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)})
 
-        if add_alert(symbol, price):
-            print(f"Alert added for {symbol} at {price}")
+    price = req["price"]
+    tickers = get_current_tickers()
+    if symbol not in tickers:
+        update_tickers([symbol])
 
-        return jsonify({"status": "success", "message": "Data received"})
-    except Exception as e:
-        print(f"Error: {e}")
+    if add_alert(symbol, price):
+        print(f"Alert added for {symbol} at {price}")
+
+    return jsonify({"status": "success", "message": "Data received"})
 
 
 @app.route("/extension_receive", methods=["POST"])
