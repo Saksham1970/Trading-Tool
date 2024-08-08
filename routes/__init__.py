@@ -8,4 +8,4 @@ from .watchlists import (
     add_watchlist_item,
     delete_watchlist_item,
 )
-from .tags import get_tags, add_tag, delete_tag, add_tag_item, delete_tag_item
+from .tags import get_tags, create_tag, delete_tag, add_alert_tag, remove_alert_tag
