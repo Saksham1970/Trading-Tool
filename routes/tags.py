@@ -45,13 +45,13 @@ def add_alert_tag():
         alert = database.get_data(
             "AlertsWatchlist", AlertID=alert_id, __dictionary=True
         )
-        tags = alert[0]["tags"]
+        tags = alert[0]["alerttags"]
         if not tags:
             tags = []
         if tag_id not in tags:
             tags.append(tag_id)
             database.cursor.execute(
-                "UPDATE AlertsWatchlist SET Tags = %s WHERE AlertID = %s",
+                "UPDATE AlertsWatchlist SET AlertTags = %s WHERE AlertID = %s",
                 (tags, alert_id),
             )
             database.conn.commit()
@@ -69,11 +69,11 @@ def remove_alert_tag():
         alert = database.get_data(
             "AlertsWatchlist", AlertID=alert_id, __dictionary=True
         )
-        tags = alert[0]["tags"]
+        tags = alert[0]["alerttags"]
         if tag_id in tags:
             tags.remove(tag_id)
             database.cursor.execute(
-                "UPDATE AlertsWatchlist SET Tags = %s WHERE AlertID = %s",
+                "UPDATE AlertsWatchlist SET AlertTags = %s WHERE AlertID = %s",
                 (tags, alert_id),
             )
             database.conn.commit()

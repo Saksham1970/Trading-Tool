@@ -19,7 +19,9 @@ query = input()
 while query != "exit":
     try:
         cursor.execute(query)
-        print(cursor.fetchall())
+        columns = [desc[0] for desc in cursor.description]
+        print([dict(zip(columns, row)) for row in cursor.fetchall()])
+        # print(cursor.fetchall())
     except Exception as e:
         print(e)
     query = input()
