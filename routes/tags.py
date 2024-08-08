@@ -13,6 +13,7 @@ def create_tag():
         database.insert_data("Tags", TagName=tag_name, TagColor=tag_color)
         return jsonify({"status": "success"})
     except Exception as e:
+        print(e)
         return jsonify({"status": "error", "message": str(e)})
 
 
