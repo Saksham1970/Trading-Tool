@@ -4,17 +4,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-HOST = "localhost"
-PORT = "5432"
-DB = "stocksdb"
-USER = "postgres"
-PASSWORD = os.environ["POSTGRES_PASSWORD"]
+EXTERNAL_DATABASE_URL = os.environ["EXTERNAL_DATABASE_URL"]
 
 try:
     # Establish the connection
-    conn = psycopg2.connect(
-        host=HOST, port=PORT, database=DB, user=USER, password=PASSWORD
-    )
+    conn = psycopg2.connect(EXTERNAL_DATABASE_URL)
 except psycopg2.Error as e:
     print(f"Error connecting to TimescaleDB: {e}")
     exit(1)

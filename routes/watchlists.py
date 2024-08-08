@@ -65,24 +65,13 @@ def delete_watchlist():
 @app.route("/add_watchlist_item", methods=["POST"])
 def add_watchlist_item():
     data = request.json
-
-    watchlist_name = data.get("watchlist_name")
-    symbol = data.get("symbol")
-
-    if not watchlist_name or not symbol:
-        return (
-            jsonify(
-                {"success": False, "error": "Watchlist name and symbol are required"}
-            ),
-            400,
-        )
-
     try:
+        watchlist_name = data.get("watchlist_name")
+        symbol = data.get("symbol")
+
         watchlist = database.get_data(
             "Watchlists", WatchlistName=watchlist_name, __dictionary=True
         )
-        if not watchlist:
-            return jsonify({"success": False, "error": "Watchlist not found"}), 404
 
         current_symbols = watchlist[0]["symbols"]
         if symbol not in current_symbols:
@@ -104,24 +93,12 @@ def add_watchlist_item():
 @app.route("/delete_watchlist_item", methods=["POST"])
 def delete_watchlist_item():
     data = request.json
-    watchlist_name = data.get("watchlist_name")
-    symbol = data.get("symbol")
-
-    if not watchlist_name or not symbol:
-        return (
-            jsonify(
-                {"success": False, "error": "Watchlist name and symbol are required"}
-            ),
-            400,
-        )
-
     try:
+        watchlist_name = data.get("watchlist_name")
+        symbol = data.get("symbol")
         watchlist = database.get_data(
             "Watchlists", WatchlistName=watchlist_name, __dictionary=True
         )
-        if not watchlist:
-            return jsonify({"success": False, "error": "Watchlist not found"}), 404
-
         current_symbols = watchlist[0]["symbols"]
         if symbol in current_symbols:
             current_symbols.remove(symbol)
@@ -130,16 +107,7 @@ def delete_watchlist_item():
                 (current_symbols, watchlist_name),
             )
             database.conn.commit()
-
-            return (
-                jsonify(
-                    {
-                        "success": True,
-                        "message": "Symbol removed from watchlist successfully",
-                    }
-                ),
-                200,
-            )
+            return jsonify({"success": True})
 
         else:
             return jsonify({"success": True, "message": "Symbol not in watchlist"}), 200

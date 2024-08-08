@@ -26,7 +26,7 @@ def execute_sql(conn, sql_command):
 def initialize_database():
     try:
         # Connect to the database
-        conn = psycopg2.connect(DATABASE_URL)
+        conn = psycopg2.connect(EXTERNAL_DATABASE_URL)
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
 
         print("Successfully connected to the database.")

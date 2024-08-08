@@ -3,7 +3,7 @@ from flask import request, jsonify
 
 import utils.database as database
 from utils.llm_comparison import yfinance_from_tradingview
-from pages.alert import add_alert
+from routes.alert import add_alert
 from utils.data import get_current_tickers
 from utils.startup import update_tickers
 from utils.api import search_yfinance_tickers
