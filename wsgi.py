@@ -9,4 +9,4 @@ quote_streaming_thread.daemon = True
 quote_streaming_thread.start()
 
 # This is the application object that Gunicorn will use
-application = socketio.WSGIApp(app)
+application = socketio.middleware(app)
