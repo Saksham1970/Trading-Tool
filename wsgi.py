@@ -1,3 +1,7 @@
+from gevent import monkey
+
+monkey.patch_all()
+
 from server import app, socketio, setup_scheduler, run_quote_streaming
 import threading
 
@@ -9,4 +13,4 @@ quote_streaming_thread.daemon = True
 quote_streaming_thread.start()
 
 # This is the application object that Gunicorn will use
-application = socketio.middleware(app)
+application = socketio.wsgi_app(app)
