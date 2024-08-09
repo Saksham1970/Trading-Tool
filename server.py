@@ -28,4 +28,4 @@ if __name__ == "__main__":
     quote_streaming_thread.start()
 
     # Run the Flask app with SocketIO
-    socketio.run(app, host="0.0.0.0", port=5000, debug=True, use_reloader=False)
+    # socketio.run(app, host="0.0.0.0", port=5000, debug=True, use_reloader=False)
