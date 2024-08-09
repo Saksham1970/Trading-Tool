@@ -14,6 +14,10 @@ except psycopg2.Error as e:
     exit(1)
 
 
+def get_new_cursor():
+    return conn.cursor()
+
+
 def get_data(table, __dictionary=False, **kwargs):
     # Query to get data from a table
     where_clause = " AND ".join([f"{key} = %s" for key in kwargs.keys()])

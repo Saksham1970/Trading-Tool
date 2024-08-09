@@ -1,7 +1,0 @@
-FROM timescale/timescaledb:latest-pg14
-
-# Set environment variables
-ENV POSTGRES_DB=stocksdb
-
-# Copy initialization script
-COPY init.sql /docker-entrypoint-initdb.d/

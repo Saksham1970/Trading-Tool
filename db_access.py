@@ -4,11 +4,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-EXTERNAL_DATABASE_URL = os.environ["EXTERNAL_DATABASE_URL"]
+DATABASE_URL = os.environ["DATABASE_URL"]
 
 try:
     # Establish the connection
-    conn = psycopg2.connect(EXTERNAL_DATABASE_URL)
+    conn = psycopg2.connect(DATABASE_URL)
 except psycopg2.Error as e:
     print(f"Error connecting to TimescaleDB: {e}")
     exit(1)

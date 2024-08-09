@@ -1,57 +1,33 @@
+from app_config import socketio
 from dotenv import load_dotenv
 
 load_dotenv()
-import sys
 import asyncio
-import websockets
 import json
-import signal
 from datetime import datetime
 import yfinance as yf
 import pytz
 import pandas as pd
 from collections import defaultdict
 from yflive import QuoteStreamer
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.schedulers.background import BackgroundScheduler
 
 from utils import database
 from utils.startup import process_multiple_ticker_df
 from utils.config import MARKET_CLOSE_UPDATE_TD, SETTINGS
 from utils.data import get_current_tickers
-import queue
 
-
-ws_queue = queue.Queue()
 symbol_averages = defaultdict(lambda: defaultdict(float))
 streamer = QuoteStreamer()
 daily_updated = defaultdict(datetime.date)
 
-
-shutdown_flag = False
-
-
-async def shutdown(loop):
-    """Cleanup tasks tied to the service's shutdown."""
-    global shutdown_flag
-    shutdown_flag = True
-
-    print("Shutting down...")
-
-    tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
-
-    for task in tasks:
-        task.cancel()
-
-    print(f"Cancelling {len(tasks)} outstanding tasks")
-    await asyncio.gather(*tasks, return_exceptions=True)
-
-    loop.stop()
+scheduler = BackgroundScheduler()
 
 
-def signal_handler(sig, frame):
-    print(f"Received signal {sig}")
-    loop = asyncio.get_event_loop()
-    loop.create_task(shutdown(loop))
+def setup_scheduler():
+    scheduler.add_job(download_daily_data, "interval", hours=1)
+    scheduler.start()
+    update_all_averages()
 
 
 def update_all_averages():
@@ -92,9 +68,10 @@ def update_averages(symbols):
             symbol_averages[symbol][day] = avg_volume
 
 
-async def update_streamer_symbols():
+async def update_streamer_symbols(cursor):
     while True:
-        symbols = database.get_data_query("SELECT Symbol FROM StreamedSymbols")
+        cursor.execute("SELECT Symbol FROM StreamedSymbols")
+        symbols = cursor.fetchall()
         if symbols:
             symbols = [symbol[0] for symbol in symbols]
 
@@ -105,8 +82,8 @@ async def update_streamer_symbols():
             update_averages(symbols)
             streamer.subscribe(symbols)
 
-            database.cursor.execute("TRUNCATE StreamedSymbols")
-            database.conn.commit()
+            cursor.execute("TRUNCATE StreamedSymbols")
+            cursor.connection.commit()
 
         await asyncio.sleep(10)
 
@@ -158,25 +135,6 @@ def download_daily_data():
     print("Daily data download completed.")
 
 
-async def handle_connection(websocket):
-    try:
-        while True:
-            await asyncio.sleep(1)
-            try:
-                quote = ws_queue.get(timeout=0.1)
-                await websocket.send(json.dumps(quote))
-            except queue.Empty:
-                # Check if we should shut down
-                if shutdown_flag:
-                    break
-                continue
-            except websockets.exceptions.ConnectionClosed:
-                print("Client connection closed")
-                break
-    finally:
-        print("Connection handler completed")
-
-
 def on_quote(qs, quote):
     processed_quote = {
         "symbol": quote.identifier,
@@ -207,84 +165,35 @@ def on_quote(qs, quote):
                 processed_quote[f"rvol_{days}"] = float(
                     quote.dayVolume / symbol_averages[quote.identifier][days]
                 )
-    ws_queue.put(processed_quote)
+    print("Raw quote:", processed_quote)
+    serialized_quote = json.dumps(processed_quote)
+    print("Serialized quote:", serialized_quote)
+    print("Active SocketIO clients:", len(socketio.server.eio.sockets))
+    socketio.emit("quote", serialized_quote, namespace="/quotes")
+    print("Quote emitted")
 
 
-async def process_queue():
-    while not shutdown_flag:
-        try:
-            quote = ws_queue.get(timeout=0.1)
-            for client in connected_clients:
-                try:
-                    await client.send(json.dumps(quote))
-                except websockets.exceptions.ConnectionClosed:
-                    connected_clients.remove(client)
-        except queue.Empty:
-            await asyncio.sleep(0.01)
-
-
-async def start_quote_streaming():
-    global shutdown_flag, connected_clients
-    connected_clients = set()
-
+def start_quote_streaming():
+    print("Starting quote streaming")
     streamer.on_quote = on_quote
     symbols = get_current_tickers()
     streamer.subscribe(symbols)
     streamer.start(should_thread=True)
 
-    async def handler(websocket):
-        connected_clients.add(websocket)
-        try:
-            await websocket.wait_closed()
-        finally:
-            connected_clients.remove(websocket)
+    print("Quote streaming started")
 
-    server = await websockets.serve(handler, "0.0.0.0", 8765)
-    print("Quote server started on 0.0.0.0:8765")
+    new_cursor = database.get_new_cursor()
 
-    queue_task = asyncio.create_task(process_queue())
-
-    try:
-        while not shutdown_flag:
-            await asyncio.sleep(1)
-    finally:
-        server.close()
-        await server.wait_closed()
-        streamer.stop()
-        queue_task.cancel()
-        await queue_task
+    while True:
+        socketio.sleep(10)
+        asyncio.run(update_streamer_symbols(new_cursor))
 
 
-async def main():
-    global main_loop
-    main_loop = asyncio.get_event_loop()
-
-    scheduler = AsyncIOScheduler()
-    scheduler.add_job(download_daily_data, "interval", hours=1)
-    scheduler.start()
-    update_all_averages()
-
-    try:
-        await asyncio.gather(start_quote_streaming(), update_streamer_symbols())
-    finally:
-        scheduler.shutdown()
-        print("Shutdown complete.")
+@socketio.on("connect", namespace="/quotes")
+def handle_connect():
+    print("Client connected")
 
 
-if __name__ == "__main__":
-    if sys.platform == "win32":
-        # Windows-specific signal handling
-        signal.signal(signal.SIGINT, signal_handler)
-        signal.signal(signal.SIGTERM, signal_handler)
-    else:
-        # Unix-like systems can use asyncio's add_signal_handler
-        loop = asyncio.get_event_loop()
-        for s in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
-            loop.add_signal_handler(s, lambda s=s: asyncio.create_task(shutdown(loop)))
-
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("KeyboardInterrupt caught in main.")
-    finally:
-        print("Main shutdown complete.")
+@socketio.on("disconnect", namespace="/quotes")
+def handle_disconnect():
+    print("Client disconnected")

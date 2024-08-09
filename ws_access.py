@@ -1,25 +1,49 @@
-# quote_client.py
+import socketio
 import asyncio
-import websockets
 import json
 
+sio = socketio.AsyncClient(logger=True, engineio_logger=True)
 
-async def connect_and_listen():
-    uri = "ws://localhost:8765"
 
-    async with websockets.connect(uri) as websocket:
-        print("Connected to the websocket server")
+@sio.event(namespace="/quotes")
+async def connect():
+    print("Connected to the SocketIO server on namespace /quotes")
 
+
+@sio.event(namespace="/quotes")
+async def connect_error(data):
+    print(f"Connection failed on namespace /quotes: {data}")
+
+
+@sio.event(namespace="/quotes")
+async def disconnect():
+    print("Disconnected from the SocketIO server on namespace /quotes")
+
+
+@sio.on("quote", namespace="/quotes")
+async def on_quote(data):
+    try:
+        quote = json.loads(data) if isinstance(data, str) else data
+        print(f"Received quote: {quote}")
+    except json.JSONDecodeError:
+        print(f"Received non-JSON data: {data}")
+
+
+async def main():
+    retry_interval = 5
+    while True:
         try:
-            while True:
-                message = await websocket.recv()
-                try:
-                    data = json.loads(message)
-                    print(f"Received data: {json.dumps(data, indent=2)}")
-                except json.JSONDecodeError:
-                    print(f"Received message: {message}")
-        except websockets.exceptions.ConnectionClosed:
-            print("Connection to the server was closed")
+            await sio.connect("http://localhost:5000", namespaces=["/quotes"])
+            print("Connected to server")
+            await sio.wait()
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            print(f"Retrying in {retry_interval} seconds...")
+            await asyncio.sleep(retry_interval)
+        finally:
+            if sio.connected:
+                await sio.disconnect()
 
 
-asyncio.get_event_loop().run_until_complete(connect_and_listen())
+if __name__ == "__main__":
+    asyncio.run(main())
